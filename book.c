@@ -25,7 +25,7 @@ struct User {
 struct Transaction {
     int user_id;
     int book_id;
-    int type; // 1 = borrow, 2 = return
+    int type; 
 };
 
 struct Book books[MAX_BOOKS];
