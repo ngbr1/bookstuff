@@ -25,8 +25,7 @@ struct User {
 struct Transaction {
     int user_id;
     int book_id;
-    char date[20];
-    int type; 
+    int type; // 1 = borrow, 2 = return
 };
 
 struct Book books[MAX_BOOKS];
@@ -94,7 +93,8 @@ void saveData() {
     FILE *ft = fopen("transactions.txt", "w");
     if (ft) {
         for (int i = 0; i < trans_count; i++) {
-            fprintf(ft, "%d|%d|%s|%d\n", transactions[i].user_id, transactions[i].book_id, transactions[i].date, transactions[i].type);
+            // Saved without date
+            fprintf(ft, "%d|%d|%d\n", transactions[i].user_id, transactions[i].book_id, transactions[i].type);
         }
         fclose(ft);
     }
@@ -118,7 +118,7 @@ void addPresetBook(int id, const char* title, const char* author, int year, int 
 void loadData() {
     FILE *fb = fopen("books.txt", "r");
     if (fb) {
-        while (fscanf(fb, "%d|%99[^|]|%99[^|]|%d|%d|%d|%d\n", &books[book_count].id, books[book_count].title, books[book_count].author, &books[book_count].year, &books[book_count].quantity, &books[book_count].available, &books[book_count].borrow_count) == 7) {
+while (fscanf(fb, "%d|%99[^|]|%99[^|]|%d|%d|%d|%d\n", &books[book_count].id, books[book_count].title, books[book_count].author, &books[book_count].year, &books[book_count].quantity, &books[book_count].available, &books[book_count].borrow_count) == 7) {
             if (book_count < MAX_BOOKS - 1) book_count++;
             else break;
         }
@@ -144,7 +144,8 @@ void loadData() {
 
     FILE *ft = fopen("transactions.txt", "r");
     if (ft) {
-        while (fscanf(ft, "%d|%d|%19[^|]|%d\n", &transactions[trans_count].user_id, &transactions[trans_count].book_id, transactions[trans_count].date, &transactions[trans_count].type) == 4) {
+        // Loaded without date
+        while (fscanf(ft, "%d|%d|%d\n", &transactions[trans_count].user_id, &transactions[trans_count].book_id, &transactions[trans_count].type) == 3) {
             if (trans_count < MAX_TRANS - 1) trans_count++;
             else break;
         }
@@ -185,8 +186,7 @@ void addBook() {
         printf("Error: Book ID must be a positive number.\n");
         return;
     }
-
-    printf("Enter title: ");
+printf("Enter title: ");
     scanf(" %99[^\n]", b.title);
     sanitizeString(b.title);
 
@@ -271,7 +271,7 @@ void searchBook() {
         search_num = getValidInt();
         for (int i = 0; i < book_count; i++) {
             if ((choice == 1 && books[i].id == search_num) || (choice == 4 && books[i].year == search_num)) {
-                printf("\nFound: [%d] '%s' by %s (%d) - %d/%d available\n", books[i].id, books[i].title, books[i].author, books[i].year, books[i].available, books[i].quantity);
+printf("\nFound: [%d] '%s' by %s (%d) - %d/%d available\n", books[i].id, books[i].title, books[i].author, books[i].year, books[i].available, books[i].quantity);
                 found = 1;
             }
         }
@@ -320,176 +320,4 @@ void borrowBook() {
     }
 
     if (books[b_idx].available > 0) {
-        books[b_idx].available--;
-        books[b_idx].borrow_count++;
-        users[u_idx].borrowed_count++;
-        
-        transactions[trans_count].user_id = user_id;
-        transactions[trans_count].book_id = book_id;
-        strcpy(transactions[trans_count].date, "N/A");
-        transactions[trans_count].type = 1;
-        trans_count++;
-
-        printf("Successfully borrowed '%s'.\n", books[b_idx].title);
-    } else {
-        printf("Sorry, '%s' is currently out of stock.\n", books[b_idx].title);
-    }
-}
-
-void returnBook() {
-    if (trans_count >= MAX_TRANS) {
-        printf("Error: Transaction limit reached. Contact Admin.\n");
-        return;
-    }
-
-    int user_id, book_id;
-    printf("Enter User ID: ");
-    user_id = getValidInt();
-    
-    int u_idx = findUserIndex(user_id);
-    if (u_idx == -1) {
-        printf("Error: User ID not found.\n");
-        return;
-    }
-
-    printf("Enter Book ID to return: ");
-    book_id = getValidInt();
-
-    int b_idx = findBookIndex(book_id);
-    if (b_idx == -1) {
-        printf("Error: Book ID not found.\n");
-        return;
-    }
-
-    if (books[b_idx].available < books[b_idx].quantity) {
-        books[b_idx].available++;
-        if(users[u_idx].borrowed_count > 0) users[u_idx].borrowed_count--;
-
-        transactions[trans_count].user_id = user_id;
-        transactions[trans_count].book_id = book_id;
-        strcpy(transactions[trans_count].date, "N/A");
-        transactions[trans_count].type = 2;
-        trans_count++;
-
-        printf("Successfully returned '%s'.\n", books[b_idx].title);
-    } else {
-        printf("Error: All copies of '%s' are already in the library.\n", books[b_idx].title);
-    }
-}
-
-void addUser() {
-    if (user_count >= MAX_USERS) {
-        printf("Error: User database is full (Max %d users).\n", MAX_USERS);
-        return;
-    }
-
-    struct User u;
-    
-    int max_id = 0;
-    for (int i = 0; i < user_count; i++) {
-        if (users[i].id > max_id) {
-            max_id = users[i].id;
-        }
-    }
-    
-    u.id = max_id + 1; 
-
-    printf("Auto-assigned User ID: %05d\n", u.id);
-    
-    printf("Enter User Name: ");
-    scanf(" %99[^\n]", u.name);
-    sanitizeString(u.name);
-    u.borrowed_count = 0;
-    
-    users[user_count++] = u;
-    printf("User '%s' (ID: %05d) added successfully!\n", u.name, u.id);
-}
-
-void displayUsers() {
-    if (user_count == 0) {
-        printf("\nNo users registered.\n");
-        return;
-    }
-    printf("\nID\t\tName\t\t\tBorrowed\n");
-    printf("--------------------------------------------------\n");
-    for (int i = 0; i < user_count; i++) {
-        printf("%05d\t\t%-20.20s\t%d\n", users[i].id, users[i].name, users[i].borrowed_count);
-    }
-}
-
-void viewTransactions() {
-    if (trans_count == 0) {
-        printf("\nNo transactions recorded yet.\n");
-        return;
-    }
-    printf("\nDate\t\tUser ID\tBook ID\tType\n");
-    printf("-------------------------------------------------------------------\n");
-    for (int i = 0; i < trans_count; i++) {
-        printf("%s\t%05d\t%d\t%s\n", 
-            transactions[i].date, 
-            transactions[i].user_id, 
-            transactions[i].book_id, 
-            transactions[i].type == 1 ? "BORROW" : "RETURN");
-    }
-}
-
-void showStatistics() {
-    int total_books = 0;
-    int total_borrowed = 0;
-    int most_borrowed_idx = -1;
-    int max_borrows = -1;
-
-    for (int i = 0; i < book_count; i++) {
-        total_books += books[i].quantity;
-        total_borrowed += (books[i].quantity - books[i].available);
-        
-        if (books[i].borrow_count > max_borrows) {
-            max_borrows = books[i].borrow_count;
-            most_borrowed_idx = i;
-        }
-    }
-
-    printf("\n--- Library Statistics ---\n");
-    printf("Total distinct titles: %d\n", book_count);
-    printf("Total books in system: %d\n", total_books);
-    printf("Total books currently borrowed: %d\n", total_borrowed);
-    
-    if (most_borrowed_idx != -1 && max_borrows > 0) {
-        printf("Most frequently borrowed book: '%s' (%d times)\n", 
-            books[most_borrowed_idx].title, max_borrows);
-    }
-}
-
-int main() {
-    loadData();
-
-    int choice;
-    while(1) {
-        showMenu();
-        
-        if (scanf("%d", &choice) != 1) {
-            clearInputBuffer();
-            printf("Invalid choice! Please enter a number.\n");
-            continue;
-        }
-        
-        switch(choice) {
-            case 1: addBook(); break;
-            case 2: displayBooks(); break;
-            case 3: searchBook(); break;
-            case 4: borrowBook(); break;
-            case 5: returnBook(); break;
-            case 6: addUser(); break;
-            case 7: displayUsers(); break;
-            case 8: viewTransactions(); break;
-            case 9: showStatistics(); break;
-            case 0:
-                saveData();
-                printf("Data saved. Exiting Library System. Goodbye!\n");
-                exit(0);
-            default:
-                printf("Invalid choice! Please try again.\n");
-        }
-    }
-    return 0;
-}
+        books[b_idx].available
