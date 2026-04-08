@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 
 #define MAX_BOOKS 1000
 #define MAX_USERS 1000
@@ -27,7 +26,7 @@ struct Transaction {
     int user_id;
     int book_id;
     char date[20];
-    int type; // 1 = borrow, 2 = return
+    int type; 
 };
 
 struct Book books[MAX_BOOKS];
@@ -39,15 +38,11 @@ int user_count = 0;
 struct Transaction transactions[MAX_TRANS];
 int trans_count = 0;
 
-// --- UTILITY FUNCTIONS ---
-
-// Clears the input buffer to prevent infinite loops on bad input
 void clearInputBuffer() {
     int c;
     while ((c = getchar()) != '\n' && c != EOF);
 }
 
-// Safely reads an integer, prompting until valid
 int getValidInt() {
     int value;
     while (scanf("%d", &value) != 1) {
@@ -57,22 +52,12 @@ int getValidInt() {
     return value;
 }
 
-// Sanitizes strings to replace '|' with '-' to prevent save file corruption
 void sanitizeString(char* str) {
     for (int i = 0; str[i] != '\0'; i++) {
         if (str[i] == '|') {
             str[i] = '-';
         }
     }
-}
-
-// Gets the current local date
-char* getCurrentDate() {
-    static char date[20];
-    time_t t = time(NULL);
-    struct tm tm = *localtime(&t);
-    sprintf(date, "%04d-%02d-%02d", tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday);
-    return date;
 }
 
 int findUserIndex(int id) {
@@ -88,8 +73,6 @@ int findBookIndex(int id) {
     }
     return -1;
 }
-
-// --- DATA PERSISTENCE ---
 
 void saveData() {
     FILE *fb = fopen("books.txt", "w");
@@ -141,7 +124,6 @@ void loadData() {
         }
         fclose(fb);
     } else {
-        // Load presets if no save file exists
         addPresetBook(154, "cheeseburger", "beeangoodshape", 2021, 1);
         addPresetBook(153, "that one infinite game", "beeangoodshape", 2025, 1000);
         addPresetBook(152, "hes in your wall", "beeangoodshape", 2023, 4);
@@ -170,8 +152,6 @@ void loadData() {
     }
 }
 
-// --- CORE FUNCTIONS ---
-
 void showMenu() {
     printf("\n⠀⣀⣤⣤⣤⣀⠀⠀⠀⠀⣀⣤⣤⣤⣀⠀      ========== LIBRARY SYSTEM ==========\n");
     printf("⣼⣿⣿⣿⣿⣿⣷⡆⢰⣾⣿⣿⣿⣿⣿⣷      1. Add new book\n");
@@ -180,7 +160,7 @@ void showMenu() {
     printf("⣿⣿⣿⣿⣿⣿⣿⡇⢸⣿⣿⣿⣿⣿⣿⣿      4. Borrow book\n");
     printf("⠛⠛⠛⠿⠿⣿⣿⡇⢸⣿⣿⠿⠿⠛⠛⠛      5. Return book\n");
     printf("⠙⠓⠒⠶⠦⣄⡉⡃⢘⢉⣠⠴⠶⠒⠚⠋      6. Add User\n");
-    printf("      ⠀⠁⠈⠀⠀⠀⠀         7. Display Users\n");
+    printf("      ⠀⠁⠈⠀⠀⠀⠀        7. Display Users\n");
     printf("                      8. View Transactions\n");
     printf("                      9. Statistics\n");
     printf("                      0. Exit & Save\n");
@@ -346,7 +326,7 @@ void borrowBook() {
         
         transactions[trans_count].user_id = user_id;
         transactions[trans_count].book_id = book_id;
-        strcpy(transactions[trans_count].date, getCurrentDate());
+        strcpy(transactions[trans_count].date, "N/A");
         transactions[trans_count].type = 1;
         trans_count++;
 
@@ -387,7 +367,7 @@ void returnBook() {
 
         transactions[trans_count].user_id = user_id;
         transactions[trans_count].book_id = book_id;
-        strcpy(transactions[trans_count].date, getCurrentDate());
+        strcpy(transactions[trans_count].date, "N/A");
         transactions[trans_count].type = 2;
         trans_count++;
 
@@ -396,8 +376,6 @@ void returnBook() {
         printf("Error: All copies of '%s' are already in the library.\n", books[b_idx].title);
     }
 }
-
-// --- EXTENSION FUNCTIONS ---
 
 void addUser() {
     if (user_count >= MAX_USERS) {
@@ -489,7 +467,6 @@ int main() {
     while(1) {
         showMenu();
         
-        // Prevents infinite loop if user enters letters instead of numbers
         if (scanf("%d", &choice) != 1) {
             clearInputBuffer();
             printf("Invalid choice! Please enter a number.\n");
